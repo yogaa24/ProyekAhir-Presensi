@@ -64,19 +64,17 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[800],
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white, // Ganti warna latar bawah
-        selectedItemColor: Colors.blue, // Ganti warna item terpilih
-        unselectedItemColor: Colors.grey, // Ganti warna item tidak terpilih
-        currentIndex: currentPageIndex,
-        onTap: (int index) {
+      bottomNavigationBar: NavigationBar(
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+        selectedIndex: currentPageIndex,
+        onDestinationSelected: (int index) {
           setState(() {
             currentPageIndex = index;
           });
 
           switch (index) {
             case 0:
-              //
+              Navigator.pushReplacementNamed(context, '/home');
               break;
             case 1:
               Navigator.pushReplacementNamed(context, '/izin');
@@ -89,21 +87,22 @@ class _HomePageState extends State<HomePage> {
               break;
           }
         },
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
+        destinations: const <Widget>[
+          NavigationDestination(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.assignment),
             label: 'Ijin',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.history),
             label: 'History',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.person),
+            icon: Icon(Icons.person_2_outlined),
             label: 'Profil',
           ),
         ],
@@ -115,7 +114,7 @@ class _HomePageState extends State<HomePage> {
               margin: EdgeInsets.only(top: 180),
               decoration: BoxDecoration(
                 color: Colors.grey[300],
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(15),
                   topRight: Radius.circular(15),
                 ),
@@ -132,21 +131,19 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 40,
                       backgroundImage: NetworkImage(
                           'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Windows_10_Default_Profile_Picture.svg/768px-Windows_10_Default_Profile_Picture.svg.png?20221210150350'),
                     ),
-                    SizedBox(
-                        width:
-                            15), // Memberi sedikit jarak antara gambar dan teks
+                    const SizedBox(width: 15),
                     Baseline(
                       baseline:
                           45, // Sesuaikan dengan tinggi teks agar berada sedikit ke bawah
                       baselineType: TextBaseline.alphabetic,
                       child: Text(
                         'Hi, $name',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -166,32 +163,45 @@ class _HomePageState extends State<HomePage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // Profil
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.account_circle,
-                                size: 40, color: Colors.blue), // Warna biru
-                            Text('Profil'),
-                          ],
+                        InkWell(
+                          onTap: () {
+                            Navigator.pushReplacementNamed(context, '/profile');
+                          },
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.account_circle,
+                                  size: 40, color: Colors.blue), // Warna biru
+                              Text('Profil'),
+                            ],
+                          ),
                         ),
-                        // History
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.history,
-                                size: 40, color: Colors.orange), // Warna orange
-                            Text('History'),
-                          ],
+                        InkWell(
+                          onTap: () {
+                            Navigator.pushReplacementNamed(context, '/history');
+                          },
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.history,
+                                  size: 40,
+                                  color: Colors.orange), // Warna orange
+                              Text('History'),
+                            ],
+                          ),
                         ),
-                        // Lokasi
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.location_on,
-                                size: 40, color: Colors.red), // Warna merah
-                            Text('Lokasi'),
-                          ],
+                        InkWell(
+                          onTap: () {
+                            Navigator.pushReplacementNamed(context, '/lokasi');
+                          },
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.location_on,
+                                  size: 40, color: Colors.red), // Warna merah
+                              Text('Lokasi'),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -211,10 +221,11 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.green[400],
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.camera_alt, color: Colors.white),
+                              Icon(Icons.location_on_sharp,
+                                  color: Colors.white),
                               SizedBox(width: 10),
                               Text(
                                 'Masuk',
@@ -240,10 +251,11 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.red[400],
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.camera_alt, color: Colors.white),
+                              Icon(Icons.location_on_sharp,
+                                  color: Colors.white),
                               SizedBox(width: 10),
                               Text(
                                 'Pulang',
@@ -258,8 +270,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 30),
-                Baseline(
+                const SizedBox(height: 30),
+                const Baseline(
                   baseline: 25, // Atur nilai baseline sesuai kebutuhan
                   baselineType: TextBaseline.alphabetic,
                   child: Text(
@@ -272,7 +284,7 @@ class _HomePageState extends State<HomePage> {
                     textAlign: TextAlign.left, // Mepetkan teks ke paling kiri
                   ),
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -285,7 +297,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         height: 80,
                         width: 80,
-                        child: Column(
+                        child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.check, color: Colors.white),
@@ -307,34 +319,12 @@ class _HomePageState extends State<HomePage> {
                         ),
                         height: 80,
                         width: 80,
-                        child: Column(
+                        child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.event_available, color: Colors.white),
                             Text(
                               'Izin',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Spacer(), // Memastikan ada ruang kosong di antara Card dan Container berikutnya
-                    Card(
-                      margin: EdgeInsets.only(top: 10),
-                      color: Colors.red,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        height: 80,
-                        width: 80,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.local_hospital, color: Colors.white),
-                            Text(
-                              'Sakit',
                               style: TextStyle(color: Colors.white),
                             ),
                           ],
@@ -351,7 +341,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         height: 80,
                         width: 80,
-                        child: Column(
+                        child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.access_time, color: Colors.white),
@@ -365,7 +355,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 25),
+                const SizedBox(height: 25),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -387,7 +377,7 @@ class _HomePageState extends State<HomePage> {
                             ? Colors.green
                             : Colors.blue, // Ubah warna saat ditekan
                       ),
-                      child: Text(
+                      child: const Text(
                         'Hari Ini',
                         style: TextStyle(
                           color: Colors.black,
@@ -437,7 +427,7 @@ class _HomePageState extends State<HomePage> {
                             child: Column(
                               children: [
                                 Text(hariIni?.tanggal ?? '-',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         color: Colors.white, fontSize: 16)),
                                 SizedBox(height: 30),
                                 Row(
@@ -447,10 +437,10 @@ class _HomePageState extends State<HomePage> {
                                     Column(
                                       children: [
                                         Text(hariIni?.masuk ?? '-',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 24)),
-                                        Text("Masuk",
+                                        const Text("Masuk",
                                             style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 16))
@@ -459,10 +449,10 @@ class _HomePageState extends State<HomePage> {
                                     Column(
                                       children: [
                                         Text(hariIni?.pulang ?? '-',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 24)),
-                                        Text("Pulang",
+                                        const Text("Pulang",
                                             style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 16))
@@ -477,8 +467,53 @@ class _HomePageState extends State<HomePage> {
                       }
                     },
                   ),
-                if (showMonthContainer) Container(child: SizedBox(height: 20)),
-                Text("Riwayat Presensi"),
+                if (showMonthContainer)
+                  Container(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(
+                          height: 5,
+                        ),
+                        Text("Riwayat Presensi"),
+                        const SizedBox(
+                          height: 15,
+                        ),
+                        Container(
+                          height: MediaQuery.of(context).size.height,
+                          child: ListView.builder(
+                            itemCount: riwayat.length,
+                            itemBuilder: (context, index) => Card(
+                              child: ListTile(
+                                leading: Text(riwayat[index].tanggal),
+                                title: Row(children: [
+                                  Column(
+                                    children: [
+                                      Text(riwayat[index].masuk,
+                                          style: TextStyle(fontSize: 18)),
+                                      const Text("Masuk",
+                                          style: TextStyle(fontSize: 14))
+                                    ],
+                                  ),
+                                  SizedBox(width: 20),
+                                  Column(
+                                    children: [
+                                      Text(
+                                          riwayat[index].pulang ??
+                                              'Data tidak tersedia',
+                                          style: const TextStyle(fontSize: 18)),
+                                      const Text("Pulang",
+                                          style: TextStyle(fontSize: 14))
+                                    ],
+                                  ),
+                                ]),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
