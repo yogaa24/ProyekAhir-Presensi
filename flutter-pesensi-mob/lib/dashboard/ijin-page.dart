@@ -53,6 +53,12 @@ class _IzinPageState extends State<IzinPage> {
     );
 
     if (response.statusCode == 201) {
+      // Reset nilai terpilih setelah izin berhasil disimpan
+      setState(() {
+        _selectedReason = null;
+        _additionalInfo = null;
+      });
+
       // Jika izin berhasil disimpan, tampilkan pesan sukses
       showDialog(
         context: context,

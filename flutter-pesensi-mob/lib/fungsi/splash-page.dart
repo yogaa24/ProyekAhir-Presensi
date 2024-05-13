@@ -8,7 +8,7 @@ class SplashScreen extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: Colors.white, // Menggunakan Color dengan kode hex
+        backgroundColor: Color(0xFF0C2D57), // Menggunakan Color dengan kode hex
         body: Center(
           child: Container(
             width: 100, // Sesuaikan ukuran gambar sesuai kebutuhan

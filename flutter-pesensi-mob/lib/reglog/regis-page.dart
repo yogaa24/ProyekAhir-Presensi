@@ -36,8 +36,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
         SnackBar(content: Text('Registration successful')),
       );
       Navigator.pushReplacementNamed(context, '/login');
+    } else if (response.statusCode == 400) {
+      // Registration failed due to duplicate email
+      print('Registration failed: Email is already registered');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Email is already registered')),
+      );
     } else {
-      // Registration failed
+      // Other registration failures
       print('Registration failed: ${response.body}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Registration failed')),

@@ -8,16 +8,16 @@ import 'package:flutter_pesensimob/models/save-presensi-response.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_maps/maps.dart';
 import 'package:http/http.dart' as myHttp;
+import 'dart:math' as Math;
 
 class AbsenPage extends StatefulWidget {
   const AbsenPage({Key? key}) : super(key: key);
 
   @override
-  State<AbsenPage> createState() => _SimpanPageState();
+  State<AbsenPage> createState() => _AbsenPageState();
 }
 
-class _SimpanPageState extends State<AbsenPage> {
-  int currentPageIndex = 2;
+class _AbsenPageState extends State<AbsenPage> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   late Future<String> token;
 
@@ -29,17 +29,16 @@ class _SimpanPageState extends State<AbsenPage> {
     });
   }
 
-  Future<LocationData?> _currenctLocation() async {
-    bool serviceEnable;
+  Future<LocationData?> _getCurrentLocation() async {
+    bool serviceEnabled;
     PermissionStatus permissionGranted;
 
-    Location location = new Location();
+    Location location = Location();
 
-    serviceEnable = await location.serviceEnabled();
-
-    if (!serviceEnable) {
-      serviceEnable = await location.requestService();
-      if (!serviceEnable) {
+    serviceEnabled = await location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
         return null;
       }
     }
@@ -55,8 +54,41 @@ class _SimpanPageState extends State<AbsenPage> {
     return await location.getLocation();
   }
 
-  Future savePresensi(latitude, longitude) async {
+  double _calculateDistance(
+      double lat1, double lon1, double lat2, double lon2) {
+    const p = 0.017453292519943295;
+    const c = Math.cos;
+    final a = 0.5 -
+        c((lat2 - lat1) * p) / 2 +
+        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
+    return 12742 * Math.asin(Math.sqrt(a)) * 1000;
+  }
+
+  Future<void> _savePresensi(double latitude, double longitude) async {
     SavePresensiResponseModel savePresensiResponseModel;
+    //ARSENET
+    // final double companyLatitude = -8.1599498; // Latitude perusahaan
+    // final double companyLongitude = 113.7204984; // Longitude perusahaan
+
+    // KOS ABANG
+    final double companyLatitude = -8.1636542; // Latitude perusahaan
+    final double companyLongitude = 113.7082543; // Longitude perusahaan
+
+    //KOS HUSNUL CANTIKS
+    // final double companyLatitude = -8.1593229; // Latitude perusahaan
+    // final double companyLongitude = 113.7238852; // Longitude perusahaan
+
+    final double radius = 1000; // Radius dalam meter (1 km)
+
+    double distance = _calculateDistance(
+        latitude, longitude, companyLatitude, companyLongitude);
+
+    if (distance > radius) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Anda berada di luar radius perusahaan')));
+      return; // Tidak menyimpan presensi jika berada di luar radius
+    }
+
     Map<String, String> body = {
       "latitude": latitude.toString(),
       "longitude": longitude.toString()
@@ -95,10 +127,11 @@ class _SimpanPageState extends State<AbsenPage> {
         ),
       ),
       body: FutureBuilder<LocationData?>(
-          future: _currenctLocation(),
-          builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+          future: _getCurrentLocation(),
+          builder:
+              (BuildContext context, AsyncSnapshot<LocationData?> snapshot) {
             if (snapshot.hasData) {
-              final LocationData currentLocation = snapshot.data;
+              final LocationData currentLocation = snapshot.data!;
               print("KODING : " +
                   currentLocation.latitude.toString() +
                   " | " +
@@ -137,8 +170,8 @@ class _SimpanPageState extends State<AbsenPage> {
                   ),
                   ElevatedButton(
                       onPressed: () {
-                        savePresensi(currentLocation.latitude,
-                            currentLocation.longitude);
+                        _savePresensi(currentLocation.latitude!,
+                            currentLocation.longitude!);
                         Navigator.pushReplacementNamed(context, '/home');
                       },
                       child: Text("Simpan Presensi"))

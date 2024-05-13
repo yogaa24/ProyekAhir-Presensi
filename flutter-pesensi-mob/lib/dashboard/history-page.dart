@@ -14,6 +14,10 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   int currentPageIndex = 2; // Sesuaikan dengan indeks item navigasi 'history'
+  int? selectedDay; // Inisialisasi nilai default
+  int? selectedMonth; // Inisialisasi nilai default
+  int? selectedYear; // Inisialisasi nilai default
+  late String searchQuery;
 
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   late Future<String> name, _token;
@@ -23,7 +27,6 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _token = _prefs.then((SharedPreferences prefs) {
       return prefs.getString("token") ?? "";
@@ -32,9 +35,17 @@ class _HistoryPageState extends State<HistoryPage> {
     name = _prefs.then((SharedPreferences prefs) {
       return prefs.getString("name") ?? "";
     });
+
+    searchQuery = "";
   }
 
-  Future getData() async {
+  void updateSearchQuery(String newQuery) {
+    setState(() {
+      searchQuery = newQuery;
+    });
+  }
+
+  Future<void> getData() async {
     final Map<String, String> headres = {
       'Authorization': 'Bearer ' + await _token
     };
@@ -42,7 +53,6 @@ class _HistoryPageState extends State<HistoryPage> {
     var response = await myHttp.get(
         Uri.parse('http://127.0.0.1:8000/api/get-presensi'),
         headers: headres);
-    // print(response.body);
     homeResponseModel = HomeResponseModel.fromJson(json.decode(response.body));
     riwayat.clear();
     homeResponseModel!.data.forEach((element) {
@@ -104,58 +114,75 @@ class _HistoryPageState extends State<HistoryPage> {
           ),
         ],
       ),
-      body: FutureBuilder(
-        future: getData(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      height: 20,
-                    ),
-                    SizedBox(height: 20),
-                    Text("Riwayat Presensi"),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: riwayat.length,
-                        itemBuilder: (context, index) => Card(
+      body: Column(
+        children: [
+          const SizedBox(
+            height: 20,
+          ),
+          TextField(
+            onChanged: updateSearchQuery,
+            decoration: const InputDecoration(
+              labelText: 'Search',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder(
+              future: getData(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else {
+                  return ListView.builder(
+                    itemCount: riwayat.length,
+                    itemBuilder: (context, index) {
+                      final presensi = riwayat[index];
+                      if (searchQuery.isEmpty ||
+                          presensi.tanggal
+                              .toLowerCase()
+                              .contains(searchQuery.toLowerCase())) {
+                        return Card(
                           child: ListTile(
-                            leading: Text(riwayat[index].tanggal),
-                            title: Row(children: [
-                              Column(
-                                children: [
-                                  Text(riwayat[index].masuk,
-                                      style: TextStyle(fontSize: 18)),
-                                  Text("Masuk", style: TextStyle(fontSize: 14))
-                                ],
-                              ),
-                              SizedBox(width: 20),
-                              Column(
-                                children: [
-                                  Text(
-                                      riwayat[index].pulang ??
-                                          'Data tidak tersedia',
-                                      style: TextStyle(fontSize: 18)),
-                                  Text("Pulang", style: TextStyle(fontSize: 14))
-                                ],
-                              ),
-                            ]),
+                            leading: Text(presensi.tanggal),
+                            title: Row(
+                              children: [
+                                Column(
+                                  children: [
+                                    Text(
+                                      presensi.masuk,
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                    const Text("Masuk",
+                                        style: TextStyle(fontSize: 14))
+                                  ],
+                                ),
+                                const SizedBox(width: 20),
+                                Column(
+                                  children: [
+                                    Text(
+                                      presensi.pulang ?? 'Data tidak tersedia',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                    const Text("Pulang",
+                                        style: TextStyle(fontSize: 14))
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-        },
+                        );
+                      } else {
+                        return const SizedBox
+                            .shrink(); // Return empty widget if not matching search query
+                      }
+                    },
+                  );
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -13,18 +13,12 @@ class _HomePageState extends State<HomePage> {
   bool showTodayContainer = true;
   bool showMonthContainer = false;
   int currentPageIndex = 0;
-  late String bulan = ''; // Variabel untuk menyimpan nilai bulan
-  late int tahun = 0; // Variabel untuk menyimpan nilai tahun
   late String name;
   late String token;
   HomeResponseModel? homeResponseModel;
   Datum? hariIni;
   List<Datum> riwayat = [];
-
-  String jumlahTepat = '0';
-  String jumlahTerlambat = '0';
-  String jumlahIzinKeperluan = '0';
-  String jumlahIzinSakit = '0';
+  List<List<Datum>> groupedRiwayat = [];
 
   @override
   void initState() {
@@ -41,100 +35,40 @@ class _HomePageState extends State<HomePage> {
     print('Nama adalah: $name');
     print('Token adalah: $token');
     getData(); // Panggil fungsi getData setelah mendapatkan data user
-    fetchIzinAndPresensiCounts();
   }
 
   Future<void> getData() async {
-    final Map<String, String> headers = {'Authorization': 'Bearer $token'};
-
-    try {
-      var response = await myHttp.get(
-        Uri.parse('http://127.0.0.1:8000/api/get-presensi'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        // Respons sukses, tangani respons JSON
-        homeResponseModel =
-            HomeResponseModel.fromJson(json.decode(response.body));
-        riwayat.clear();
-
-        homeResponseModel!.data.forEach((element) {
-          if (element.isHariIni) {
-            hariIni = element;
-          } else {
-            riwayat.add(element);
-          }
-
-          String tanggal =
-              element.tanggal; // Contoh tanggal: "Sabtu, 4 Mei 2024"
-          bulan = _parseMonth(tanggal); // Simpan nilai bulan
-          tahun = _parseYear(tanggal); // Simpan nilai tahun
-          print('Bulan: $bulan, Tahun: $tahun');
-        });
+    final Map<String, String> headers = {
+      'Authorization': 'Bearer $token',
+    };
+    print(headers);
+    var response = await myHttp.get(
+      Uri.parse('http://127.0.0.1:8000/api/get-presensi'),
+      headers: headers,
+    );
+    print(response.headers);
+    homeResponseModel = HomeResponseModel.fromJson(json.decode(response.body));
+    riwayat.clear();
+    homeResponseModel!.data.forEach((element) {
+      if (element.isHariIni) {
+        hariIni = element;
       } else {
-        // Tangani kesalahan saat melakukan permintaan
-        print('Request failed with status: ${response.statusCode}');
+        riwayat.add(element);
       }
-    } catch (error) {
-      // Tangani kesalahan koneksi atau permintaan
-      print('Error: $error');
+    });
+    groupRiwayatByWeek();
+  }
+
+  void groupRiwayatByWeek() {
+    groupedRiwayat = [];
+    int weekCount = (riwayat.length / 7).ceil();
+    for (int i = 0; i < weekCount; i++) {
+      int startIndex = i * 7;
+      int endIndex = (i + 1) * 7;
+      if (endIndex > riwayat.length) endIndex = riwayat.length;
+      groupedRiwayat.add(riwayat.sublist(startIndex, endIndex));
     }
-  }
-
-  String _parseMonth(String date) {
-    List<String> parts = date.split(' ');
-    return parts[2]; // Ambil bagian bulan dari string tanggal
-  }
-
-  int _parseYear(String date) {
-    List<String> parts = date.split(' ');
-    return int.parse(parts[3]); // Ambil bagian tahun dari string tanggal
-  }
-
-  Future<void> fetchIzinAndPresensiCounts() async {
-    String apiUrl =
-        'http://localhost:8000/api/izin-presensi-counts'; // URL API untuk mengambil izin dan presensi counts
-    try {
-      final response = await myHttp.get(
-        Uri.parse(apiUrl),
-        headers: {
-          'Authorization':
-              'Bearer $token', // Mengirim token pengguna di header Authorization
-        },
-      );
-
-      if (response.statusCode == 200) {
-        // Respons sukses, tangani respons JSON
-        Map<String, dynamic> data = json.decode(response.body);
-        print(response.body);
-        int jumlahIzinSakit = int.parse(data['jumlah_izin_sakit'].toString());
-        int jumlahIzinKeperluan =
-            int.parse(data['jumlah_izin_keperluan'].toString());
-        int jumlahTepat = int.parse(data['jumlah_tepat'].toString());
-        int jumlahTerlambat = int.parse(data['jumlah_terlambat'].toString());
-
-        // Lakukan sesuatu dengan data yang diperoleh
-        print('Jumlah Izin Sakit: $jumlahIzinSakit');
-        print('Jumlah Izin Keperluan: $jumlahIzinKeperluan');
-        print('Jumlah Tepat: $jumlahTepat');
-        print('Jumlah Terlambat: $jumlahTerlambat');
-
-        // Set nilai variabel kelas dengan nilai yang diperoleh
-        setState(() {
-          this.jumlahIzinSakit = jumlahIzinSakit.toString();
-          this.jumlahIzinKeperluan = jumlahIzinKeperluan.toString();
-          this.jumlahTepat = jumlahTepat.toString();
-          this.jumlahTerlambat = jumlahTerlambat.toString();
-        });
-      } else {
-        // Tangani kesalahan saat melakukan permintaan
-        print('Request failed with status: ${response.statusCode}');
-      }
-    } catch (error) {
-      // Tangani kesalahan koneksi atau permintaan
-      print('Error: $error');
-    }
+    setState(() {}); // Update UI setelah mengelompokkan data
   }
 
   @override
@@ -215,8 +149,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(width: 15),
                     Baseline(
-                      baseline:
-                          45, // Sesuaikan dengan tinggi teks agar berada sedikit ke bawah
+                      baseline: 45,
                       baselineType: TextBaseline.alphabetic,
                       child: Text(
                         'Hi, $name',
@@ -347,12 +280,12 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
-                Container(
-                  margin: EdgeInsets.only(
-                      top: 25), // Ubah sesuai kebutuhan marginnya
+                SizedBox(height: 30),
+                Baseline(
+                  baseline: 25,
+                  baselineType: TextBaseline.alphabetic,
                   child: Text(
-                    'Rekap presensi bulan $bulan $tahun',
+                    'Rekap presensi bulan April 2024',
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 17,
@@ -361,203 +294,78 @@ class _HomePageState extends State<HomePage> {
                     textAlign: TextAlign.left,
                   ),
                 ),
-                const SizedBox(height: 15),
+                SizedBox(height: 15),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Stack(
-                      children: [
-                        Card(
-                          margin: EdgeInsets.only(top: 10),
-                          color: Colors.amber,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            height: 80,
-                            width: 80,
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check, color: Colors.white),
-                                Text(
-                                  'Hadir',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
+                    Card(
+                      margin: EdgeInsets.only(top: 10),
+                      color: Colors.amber,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        Positioned(
-                          right: 2,
-                          child: Container(
-                            height: 25,
-                            width: 25,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.red,
+                        height: 80,
+                        width: 80,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check, color: Colors.white),
+                            Text(
+                              'Hadir',
+                              style: TextStyle(color: Colors.white),
                             ),
-                            child: Center(
-                              child: Text(
-                                '$jumlahTepat', // Ganti dengan jumlah notifikasi yang sesuai
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11.0,
-                                ),
-                              ),
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                    Spacer(), // Memastikan ada ruang kosong di antara Card dan Container berikutnya
-                    Stack(
-                      children: [
-                        Card(
-                          margin: EdgeInsets.only(top: 10),
-                          color: Colors.blue,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            height: 80,
-                            width: 80,
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.event_available,
-                                    color: Colors.white),
-                                Text(
-                                  'Izin',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
+                    Spacer(),
+                    Card(
+                      margin: EdgeInsets.only(top: 10),
+                      color: Colors.blue,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        Positioned(
-                          right: 2,
-                          child: Container(
-                            height: 25,
-                            width: 25,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.red,
+                        height: 80,
+                        width: 80,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.event_available, color: Colors.white),
+                            Text(
+                              'Izin',
+                              style: TextStyle(color: Colors.white),
                             ),
-                            child: Center(
-                              child: Text(
-                                '$jumlahIzinKeperluan', // Ganti dengan jumlah notifikasi yang sesuai
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11.0,
-                                ),
-                              ),
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-
-                    Spacer(), // Memastikan ada ruang kosong di antara Card dan Container berikutnya
-                    Stack(
-                      children: [
-                        Card(
-                          margin: EdgeInsets.only(top: 10),
-                          color: Color.fromARGB(255, 59, 183, 111),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            height: 80,
-                            width: 80,
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.event_available,
-                                    color: Colors.white),
-                                Text(
-                                  'Sakit',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
+                    Spacer(),
+                    Card(
+                      margin: EdgeInsets.only(top: 10),
+                      color: Colors.orange,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        Positioned(
-                          right: 2,
-                          child: Container(
-                            height: 25,
-                            width: 25,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.red,
+                        height: 80,
+                        width: 80,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.access_time, color: Colors.white),
+                            Text(
+                              'Telat',
+                              style: TextStyle(color: Colors.white),
                             ),
-                            child: Center(
-                              child: Text(
-                                '$jumlahIzinSakit', // Ganti dengan jumlah notifikasi yang sesuai
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11.0,
-                                ),
-                              ),
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                    Spacer(), // Memastikan ada ruang kosong di antara Card dan Container berikutnya
-                    Stack(
-                      children: [
-                        Card(
-                          margin: EdgeInsets.only(top: 10),
-                          color: Colors.orange,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            height: 80,
-                            width: 80,
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.access_time, color: Colors.white),
-                                Text(
-                                  'Telat',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 2,
-                          child: Container(
-                            height: 25,
-                            width: 25,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.red,
-                            ),
-                            child: Center(
-                              child: Text(
-                                '$jumlahTerlambat', // Ganti dengan jumlah notifikasi yang sesuai
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11.0,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 25),
+                SizedBox(height: 25),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
@@ -565,8 +373,7 @@ class _HomePageState extends State<HomePage> {
                       onPressed: () {
                         setState(() {
                           showTodayContainer = true;
-                          showMonthContainer =
-                              false; // Pastikan kontainer lain disembunyikan
+                          showMonthContainer = false;
                         });
                       },
                       style: ElevatedButton.styleFrom(
@@ -575,11 +382,10 @@ class _HomePageState extends State<HomePage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(2),
                         ),
-                        primary: showTodayContainer
-                            ? Colors.green
-                            : Colors.blue, // Ubah warna saat ditekan
+                        primary:
+                            showTodayContainer ? Colors.green : Colors.blue,
                       ),
-                      child: const Text(
+                      child: Text(
                         'Hari Ini',
                         style: TextStyle(
                           color: Colors.black,
@@ -590,8 +396,7 @@ class _HomePageState extends State<HomePage> {
                       onPressed: () {
                         setState(() {
                           showMonthContainer = true;
-                          showTodayContainer =
-                              false; // Pastikan kontainer lain disembunyikan
+                          showTodayContainer = false;
                         });
                       },
                       style: ElevatedButton.styleFrom(
@@ -602,7 +407,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         primary: showMonthContainer
                             ? Colors.orange
-                            : Colors.grey[300], // Ubah warna saat ditekan
+                            : Colors.grey[300],
                       ),
                       child: Text(
                         'Bulan Ini',
@@ -629,7 +434,7 @@ class _HomePageState extends State<HomePage> {
                             child: Column(
                               children: [
                                 Text(hariIni?.tanggal ?? '-',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         color: Colors.white, fontSize: 16)),
                                 SizedBox(height: 30),
                                 Row(
@@ -639,10 +444,10 @@ class _HomePageState extends State<HomePage> {
                                     Column(
                                       children: [
                                         Text(hariIni?.masuk ?? '-',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 24)),
-                                        const Text("Masuk",
+                                        Text("Masuk",
                                             style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 16))
@@ -651,10 +456,10 @@ class _HomePageState extends State<HomePage> {
                                     Column(
                                       children: [
                                         Text(hariIni?.pulang ?? '-',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 24)),
-                                        const Text("Pulang",
+                                        Text("Pulang",
                                             style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 16))
@@ -674,43 +479,67 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(
+                        SizedBox(
                           height: 5,
                         ),
                         Text("Riwayat Presensi"),
-                        const SizedBox(
+                        SizedBox(
                           height: 15,
                         ),
                         Container(
                           height: MediaQuery.of(context).size.height,
                           child: ListView.builder(
-                            itemCount: riwayat.length,
-                            itemBuilder: (context, index) => Card(
-                              child: ListTile(
-                                leading: Text(riwayat[index].tanggal),
-                                title: Row(children: [
-                                  Column(
-                                    children: [
-                                      Text(riwayat[index].masuk,
-                                          style: TextStyle(fontSize: 18)),
-                                      const Text("Masuk",
-                                          style: TextStyle(fontSize: 14))
-                                    ],
+                            itemCount: groupedRiwayat.length,
+                            itemBuilder: (context, weekIndex) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Minggu ${weekIndex + 1}"),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemCount: groupedRiwayat[weekIndex].length,
+                                    itemBuilder: (context, index) => Card(
+                                      child: ListTile(
+                                        leading: Text(groupedRiwayat[weekIndex]
+                                                [index]
+                                            .tanggal),
+                                        title: Row(children: [
+                                          Column(
+                                            children: [
+                                              Text(
+                                                  groupedRiwayat[weekIndex]
+                                                          [index]
+                                                      .masuk,
+                                                  style:
+                                                      TextStyle(fontSize: 18)),
+                                              Text("Masuk",
+                                                  style:
+                                                      TextStyle(fontSize: 14))
+                                            ],
+                                          ),
+                                          SizedBox(width: 20),
+                                          Column(
+                                            children: [
+                                              Text(
+                                                  groupedRiwayat[weekIndex]
+                                                              [index]
+                                                          .pulang ??
+                                                      'Data tidak tersedia',
+                                                  style:
+                                                      TextStyle(fontSize: 18)),
+                                              Text("Pulang",
+                                                  style:
+                                                      TextStyle(fontSize: 14))
+                                            ],
+                                          ),
+                                        ]),
+                                      ),
+                                    ),
                                   ),
-                                  SizedBox(width: 20),
-                                  Column(
-                                    children: [
-                                      Text(
-                                          riwayat[index].pulang ??
-                                              'Data tidak tersedia',
-                                          style: const TextStyle(fontSize: 18)),
-                                      const Text("Pulang",
-                                          style: TextStyle(fontSize: 14))
-                                    ],
-                                  ),
-                                ]),
-                              ),
-                            ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ],

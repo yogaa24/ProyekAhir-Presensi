@@ -40,8 +40,9 @@ class LokasiPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double latitude = -8.1599498; // Ganti dengan latitude perusahaan
-    double longitude = 113.7204984; // Ganti dengan longitude perusahaan
+    double latitude =
+        -8.163732; // Ganti dengan latitude perusahaan-8.163732 | 113.711073
+    double longitude = 113.711073; // Ganti dengan longitude perusahaan
 
     return Scaffold(
       appBar: AppBar(
