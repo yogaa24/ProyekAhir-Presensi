@@ -22,6 +22,9 @@ class _IzinPageState extends State<IzinPage> {
     'Keperluan',
   ];
 
+  final TextEditingController _additionalInfoController =
+      TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -40,7 +43,7 @@ class _IzinPageState extends State<IzinPage> {
 
   Future<void> _sendIzinData() async {
     final token = _prefs.getString('token');
-    final url = Uri.parse('http://localhost:8000/api/izin');
+    final url = Uri.parse('https://agspresensi.framework-tif.com/api/izin');
     final response = await http.post(
       url,
       headers: {
@@ -53,25 +56,34 @@ class _IzinPageState extends State<IzinPage> {
     );
 
     if (response.statusCode == 201) {
-      // Reset nilai terpilih setelah izin berhasil disimpan
-      setState(() {
-        _selectedReason = null;
-        _additionalInfo = null;
-      });
-
       // Jika izin berhasil disimpan, tampilkan pesan sukses
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Izin berhasil disimpan'),
-            content: Text('Anda telah memberikan izin.'),
+            icon: Icon(
+              Icons.check_circle,
+              color: Color.fromARGB(255, 3, 246, 39),
+              size: 40,
+            ),
+            title: Text(
+              'Izin berhasil disimpan',
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
+                  setState(() {
+                    _selectedReason = null;
+                    _additionalInfo = null;
+                    _additionalInfoController.clear();
+                  });
                 },
-                child: Text('OK'),
+                child: Text(
+                  'OK',
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           );
@@ -124,11 +136,20 @@ class _IzinPageState extends State<IzinPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Form Izin'),
+        title: Text(
+          'Form Izin',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: Color(0xFF121481),
+        iconTheme: IconThemeData(
+          color: Colors.white, // Ubah warna panah kembali ke putih
+        ),
       ),
-      body: Container(
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
-        color: Colors.grey[200], // Ganti warna latar belakang
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -161,18 +182,26 @@ class _IzinPageState extends State<IzinPage> {
             ),
             if (_selectedReason != null &&
                 (_selectedReason == 'Sakit' || _selectedReason == 'Keperluan'))
-              SizedBox(height: 20),
+              Container(
+                width: 300,
+              ),
+            SizedBox(
+              height: 20,
+            ),
             Text(
               'Keterangan Tambahan:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
             TextField(
+              controller: _additionalInfoController,
               onChanged: (value) {
                 setState(() {
                   _additionalInfo = value;
                 });
               },
+              minLines: 3, // Set minimum number of lines
+              maxLines: 5, // Set maximum number of lines
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white,
@@ -186,12 +215,47 @@ class _IzinPageState extends State<IzinPage> {
             ElevatedButton(
               onPressed: () {
                 if (_selectedReason != null) {
-                  _sendIzinData();
+                  if (_additionalInfo == null || _additionalInfo!.isEmpty) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          icon: Icon(
+                            Icons.error_outline_sharp,
+                            color: const Color.fromARGB(255, 245, 20, 4),
+                            size: 40,
+                          ),
+                          title: Text('Keterangan Tambahan Perlu Diisi'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: Text(
+                                'OK',
+                                style: TextStyle(
+                                    color:
+                                        const Color.fromARGB(255, 240, 26, 11),
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  } else {
+                    _sendIzinData();
+                  }
                 } else {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
+                        icon: Icon(
+                          Icons.error_outline_sharp,
+                          color: const Color.fromARGB(255, 245, 20, 4),
+                          size: 40,
+                        ),
                         title: Text('Pilih Alasan Izin'),
                         content:
                             Text('Harap pilih alasan izin sebelum menyimpan.'),
@@ -200,7 +264,12 @@ class _IzinPageState extends State<IzinPage> {
                             onPressed: () {
                               Navigator.pop(context);
                             },
-                            child: Text('OK'),
+                            child: Text(
+                              'OK',
+                              style: TextStyle(
+                                  color: const Color.fromARGB(255, 240, 26, 11),
+                                  fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ],
                       );
@@ -208,27 +277,33 @@ class _IzinPageState extends State<IzinPage> {
                   );
                 }
               },
-              style: ButtonStyle(
-                // Tambahkan style untuk tombol
-                backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                elevation: MaterialStateProperty.all<double>(5),
-                shape: MaterialStateProperty.all<OutlinedBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+              child: Container(
+                alignment: Alignment.center,
+                height: 55,
+                child: Text(
+                  'Simpan Izin',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
                   ),
                 ),
               ),
-              child: Text('Simpan Izin', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                primary: Color(0xFF0C2D57),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                shadowColor: Colors.black.withOpacity(0.1),
+                elevation: 10,
+              ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white, // Ganti warna latar bawah
-        selectedItemColor: Colors.blue, // Ganti warna item terpilih
-        unselectedItemColor: Colors.grey, // Ganti warna item tidak terpilih
-        currentIndex: currentPageIndex,
-        onTap: (int index) {
+      bottomNavigationBar: NavigationBar(
+        indicatorColor: Color.fromARGB(255, 27, 41, 238).withOpacity(0.5),
+        onDestinationSelected: (int index) {
           setState(() {
             currentPageIndex = index;
           });
@@ -245,24 +320,30 @@ class _IzinPageState extends State<IzinPage> {
               break;
             case 3:
               Navigator.pushReplacementNamed(context, '/profile');
+
               break;
           }
         },
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+        selectedIndex: currentPageIndex,
+        destinations: const <Widget>[
+          NavigationDestination(
+            selectedIcon: Icon(Icons.home),
+            icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.assignment),
+            icon: Icon(Icons.assignment_outlined),
             label: 'Ijin',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.history),
+            icon: Icon(Icons.history_outlined),
             label: 'History',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.person),
+            icon: Icon(Icons.person_2_outlined),
             label: 'Profil',
           ),
         ],

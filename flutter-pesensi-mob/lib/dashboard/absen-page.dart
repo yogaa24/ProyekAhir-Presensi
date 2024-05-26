@@ -97,7 +97,7 @@ class _AbsenPageState extends State<AbsenPage> {
     Map<String, String> headers = {'Authorization': 'Bearer ' + await token};
 
     var response = await myHttp.post(
-        Uri.parse("http://localhost:8000/api/save-presensi"),
+        Uri.parse("https://agspresensi.framework-tif.com/api/save-presensi"),
         body: body,
         headers: headers);
 

@@ -20,7 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String email = '-';
   String jabatan = '-';
   String alamat = '-';
-  String password = '********';
+  String password = '';
 
   @override
   void initState() {
@@ -75,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _fetchProfile() async {
     final response = await http.get(
-      Uri.parse('http://localhost:8000/api/profile/${name}'),
+      Uri.parse('https://agspresensi.framework-tif.com/api/profile/${name}'),
     );
     print(name);
     if (response.statusCode == 200) {
@@ -88,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
           email = responseData['email'] ?? '';
           jabatan = responseData['job_title'] ?? '';
           alamat = responseData['address'] ?? '';
-          password = '********';
+          password = '';
         });
       }
     } else {
@@ -100,49 +100,179 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profile'),
-        actions: [
-          IconButton(
-              icon: Icon(Icons.edit), // Icon pensil untuk tombol edit
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/editprof');
-              }),
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _confirmLogout,
+        title: Text(
+          'Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-        ],
+        ),
+        backgroundColor: Color(0xFF121481),
+        iconTheme: IconThemeData(
+          color: Colors.white, // Ubah warna panah kembali ke putih
+        ),
       ),
-      body: ListView(
-        padding: EdgeInsets.all(16.0),
-        children: [
-          Column(
-            children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundImage: NetworkImage(profileImageUrl),
+      backgroundColor: Colors.white,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              height: 250,
+              decoration: BoxDecoration(
+                color: Color(0xFF121481),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
               ),
-              SizedBox(height: 8),
-            ],
-          ),
-          SizedBox(height: 20),
-          Container(
-            padding: EdgeInsets.all(12),
-            margin: EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: NetworkImage(profileImageUrl),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white, // Ubah warna teks menjadi putih
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    email,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white, // Ubah warna teks menjadi putih
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                ],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                InfoRow(label: 'Nama', value: nama),
-                InfoRow(label: 'No Telepon', value: nomorTelepon),
-                InfoRow(label: 'Email', value: email),
-                InfoRow(label: 'Jabatan', value: jabatan),
-                InfoRow(label: 'Alamat', value: alamat),
-                InfoRow(label: 'Password', value: password),
-              ],
+          ),
+          SliverToBoxAdapter(
+            child: Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 20),
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        InfoRow(icon: Icons.person, label: 'Nama', value: nama),
+                        Divider(
+                          color: Color(
+                              0xFF121481), // Ubah warna garis menjadi merah
+                        ),
+                        InfoRow(
+                            icon: Icons.phone,
+                            label: 'No Telepon',
+                            value: nomorTelepon),
+                        Divider(
+                          color: Color(
+                              0xFF121481), // Ubah warna garis menjadi merah
+                        ),
+                        InfoRow(
+                            icon: Icons.email, label: 'Email', value: email),
+                        Divider(
+                          color: Color(
+                              0xFF121481), // Ubah warna garis menjadi merah
+                        ),
+                        InfoRow(
+                            icon: Icons.work, label: 'Jabatan', value: jabatan),
+                        Divider(
+                          color: Color(
+                              0xFF121481), // Ubah warna garis menjadi merah
+                        ),
+                        InfoRow(
+                            icon: Icons.home, label: 'Alamat', value: alamat),
+                        Divider(
+                          color: Color(
+                              0xFF121481), // Ubah warna garis menjadi merah
+                        ),
+                        InfoRow(
+                            icon: Icons.lock,
+                            label: 'Password',
+                            value: password),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/editprof');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.white, // Ubah warna tombol menjadi putih
+                      onPrimary: Color(
+                          0xFF121481), // Ubah warna teks tombol menjadi biru
+                      side: BorderSide(
+                          color: Color(
+                              0xFF121481)), // Tambahkan garis tepi berwarna biru
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 0,
+                          vertical: 25), // Sesuaikan padding tombol
+                      minimumSize: Size(double.infinity,
+                          1), // Panjang tombol mengikuti lebar parent
+                      textStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        // Atur border radius
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text('Edit Profile'),
+                  ),
+                  SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: _confirmLogout,
+                    style: ElevatedButton.styleFrom(
+                      primary: Color(0xFF121481),
+                      onPrimary:
+                          Colors.white, // Ubah warna tombol Logout menjadi biru
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 0,
+                          vertical: 27), // Sesuaikan padding tombol
+                      minimumSize: Size(double.infinity,
+                          0), // Panjang tombol mengikuti lebar parent
+                      textStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        // Atur border radius
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text('Logout'),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -185,7 +315,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           NavigationDestination(
             selectedIcon: Icon(Icons.person),
-            icon: Icon(Icons.person_2_outlined),
+            icon: Icon(Icons.person_outline),
             label: 'Profil',
           ),
         ],
@@ -195,28 +325,50 @@ class _ProfilePageState extends State<ProfilePage> {
 }
 
 class InfoRow extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String value;
 
   const InfoRow({
+    required this.icon,
     required this.label,
     required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: Color(0xFF121481),
           ),
-        ),
-        Text(value),
-        SizedBox(height: 8),
-      ],
+          SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.blueGrey[900],
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.blueGrey[700],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
